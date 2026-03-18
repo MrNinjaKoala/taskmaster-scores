@@ -21,8 +21,9 @@
     <button onclick="updateScores()">SAVE & ANIMATE</button>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com";
-        import { getDatabase, ref, set } from "https://www.gstatic.com";
+        import { db } from "./firebase-config.js";
+        import { ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
 
         const firebaseConfig = {
             apiKey: "AIzaSyB-qvtvHOIM2vTWkKtbxEBG47qIO3qg8OI",
