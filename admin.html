@@ -38,7 +38,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        window.updateScores = function() {
+        function updateScores() {
             const scores = {
                 p1: parseInt(document.getElementById('p1').value) || 0,
                 p2: parseInt(document.getElementById('p2').value) || 0,
@@ -51,6 +51,8 @@
                 .then(() => alert("Scores pushed to Firebase!"))
                 .catch((err) => alert("Error: " + err.message));
         };
+
+        window.updateScores = updateScores;
     </script>
 </body>
 </html>
