@@ -1,20 +1,68 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-<meta charset="UTF-8">
-<title>Score Admin</title>
-<link rel="stylesheet" href="css/style.css">
+    <title>Taskmaster Admin</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #222; color: white; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input { padding: 8px; width: 100px; }
+        button { padding: 10px 20px; cursor: pointer; background: #d32f2f; color: white; border: none; border-radius: 5px; }
+    </style>
 </head>
-
 <body>
+    <h1>Scoreboard Admin</h1>
+    <!-- Hardcoded names as requested -->
+    <div id="controls">
+        <div class="input-group">
+            <label>Player 1:</label> <input type="number" id="p1" value="0">
+        </div>
+        <div class="input-group">
+            <label>Player 2:</label> <input type="number" id="p2" value="0">
+        </div>
+        <div class="input-group">
+            <label>Player 3:</label> <input type="number" id="p3" value="0">
+        </div>
+        <div class="input-group">
+            <label>Player 4:</label> <input type="number" id="p4" value="0">
+        </div>
+        <div class="input-group">
+            <label>Player 5:</label> <input type="number" id="p5" value="0">
+        </div>
+        <button onclick="updateScores()">Save & Play Animation</button>
+    </div>
 
-<h1>Score Control</h1>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com";
+        import { getDatabase, ref, set } from "https://www.gstatic.com";
 
-<div id="controls"></div>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-qvtvHOIM2vTWkKtbxEBG47qIO3qg8OI",
+            authDomain: "taskmaster-scoreboard-de7b5.firebaseapp.com",
+            databaseURL: "https://taskmaster-scoreboard-de7b5-default-rtdb.firebaseio.com",
+            projectId: "taskmaster-scoreboard-de7b5",
+            storageBucket: "taskmaster-scoreboard-de7b5.firebasestorage.app",
+            messagingSenderId: "458963855671",
+            appId: "1:458963855671:web:523c967813b9dd4ffc12b2"
+        };
 
-<script type="module" src="js/admin.js"></script>
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
+        window.updateScores = function() {
+            const scores = {
+                p1: parseInt(document.getElementById('p1').value),
+                p2: parseInt(document.getElementById('p2').value),
+                p3: parseInt(document.getElementById('p3').value),
+                p4: parseInt(document.getElementById('p4').value),
+                p5: parseInt(document.getElementById('p5').value),
+                timestamp: Date.now() // Used to trigger the listener even if scores are the same
+            };
+
+            set(ref(db, 'scores'), scores)
+                .then(() => alert("Scores updated! Main board will now animate."))
+                .catch((error) => console.error("Error:", error));
+        }
+    </script>
 </body>
-
 </html>
