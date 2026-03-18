@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Task Leaderboard</title>
+<style>
+body{
+    background:#111;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+}
+
+h1{
+    font-size:60px;
+}
+
+.top5{
+    display:flex;
+    justify-content:center;
+    gap:40px;
+    margin-top:40px;
+}
+
+.player{
+    background:#222;
+    padding:30px;
+    border-radius:10px;
+    width:200px;
+}
+
+.player h2{
+    font-size:40px;
+}
+
+.player p{
+    font-size:32px;
+}
+
+.rest{
+    margin-top:50px;
+    font-size:22px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Leaderboard</h1>
+
+<div class="top5" id="top5"></div>
+
+<div class="rest" id="rest"></div>
+
+<script>
+
+function loadScores(){
+
+let players = JSON.parse(localStorage.getItem("players")) || [];
+
+players.sort((a,b)=> b.score - a.score);
+
+let top5 = players.slice(0,5);
+let rest = players.slice(5);
+
+let topHTML = "";
+
+top5.forEach(p=>{
+topHTML += `
+<div class="player">
+<h2>${p.name}</h2>
+<p>${p.score}</p>
+</div>
+`;
+});
+
+document.getElementById("top5").innerHTML = topHTML;
+
+let restHTML = "";
+
+rest.forEach(p=>{
+restHTML += `<div>${p.name} - ${p.score}</div>`;
+});
+
+document.getElementById("rest").innerHTML = restHTML;
+
+}
+
+loadScores();
+
+setInterval(loadScores,2000);
+
+</script>
+
+</body>
+</html>

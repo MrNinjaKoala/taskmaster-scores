@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Score Admin</title>
+
+<style>
+body{
+font-family:Arial;
+padding:40px;
+}
+
+.playerRow{
+display:flex;
+gap:20px;
+margin-bottom:10px;
+}
+
+button{
+padding:5px 10px;
+font-size:18px;
+}
+
+.save{
+margin-top:30px;
+font-size:20px;
+padding:10px 20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Update Scores</h1>
+
+<div id="players"></div>
+
+<button class="save" onclick="saveScores()">Save Scores</button>
+
+<script>
+
+let players = JSON.parse(localStorage.getItem("players"));
+
+if(!players){
+players = [
+{name:"Player 1",score:0},
+{name:"Player 2",score:0},
+{name:"Player 3",score:0},
+{name:"Player 4",score:0},
+{name:"Player 5",score:0},
+{name:"Player 6",score:0}
+];
+}
+
+function render(){
+
+let html="";
+
+players.forEach((p,i)=>{
+
+html += `
+<div class="playerRow">
+<div style="width:200px">${p.name}</div>
+
+<button onclick="change(${i},-1)">-</button>
+
+<div id="score${i}" style="width:50px">${p.score}</div>
+
+<button onclick="change(${i},1)">+</button>
+
+</div>
+`;
+
+});
+
+document.getElementById("players").innerHTML = html;
+
+}
+
+function change(i,val){
+
+players[i].score += val;
+
+document.getElementById("score"+i).innerText = players[i].score;
+
+}
+
+function saveScores(){
+
+localStorage.setItem("players", JSON.stringify(players));
+
+alert("Scores saved!");
+
+}
+
+render();
+
+</script>
+
+</body>
+</html>
