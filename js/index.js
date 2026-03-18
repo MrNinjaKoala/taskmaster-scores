@@ -242,7 +242,7 @@
 		playButton.style.display = "block";
 	}
 
-	window.play = function play() {
+	window.play = function() {
 		playButton.style.display = "none";
 
 		if (!locked) {
