@@ -1,65 +1,52 @@
+import { db } from "./firebase-config.js";
+import { ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
 let players=[];
 
-async function load(){
+const playersRef = ref(db,"players");
 
-    const res = await fetch("data/scores.json");
-    const data = await res.json();
+onValue(playersRef,(snapshot)=>{
 
-    players = data.players;
+players = snapshot.val();
 
-    render();
+render();
 
-}
+});
 
 function render(){
 
-    const container = document.getElementById("controls");
+const container=document.getElementById("controls");
 
-    container.innerHTML="";
+container.innerHTML="";
 
-    players.forEach((p,i)=>{
+Object.keys(players).forEach(key=>{
 
-        const row=document.createElement("div");
+const p = players[key];
 
-        row.innerHTML=`
-            ${p.name}
+const row=document.createElement("div");
 
-            <button onclick="change(${i},-1)">-</button>
+row.innerHTML=`
+${p.name}
 
-            <span id="score${i}">${p.score}</span>
+<button onclick="change('${key}',-1)">-</button>
 
-            <button onclick="change(${i},1)">+</button>
-        `;
+<span>${p.score}</span>
 
-        container.appendChild(row);
+<button onclick="change('${key}',1)">+</button>
+`;
 
-    });
+container.appendChild(row);
 
-}
-
-function change(i,val){
-
-    players[i].score += val;
-
-    document.getElementById("score"+i).innerText = players[i].score;
+});
 
 }
 
-function exportScores(){
+window.change = function(id,val){
 
-    const data = JSON.stringify({players},null,2);
+players[id].score += val;
 
-    const blob = new Blob([data], {type:"application/json"});
-
-    const url = URL.createObjectURL(blob);
-
-    const a=document.createElement("a");
-
-    a.href=url;
-    a.download="scores.json";
-
-    a.click();
+update(playersRef,{
+[id]: players[id]
+});
 
 }
-
-load();
