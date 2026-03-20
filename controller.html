@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Taskmaster Controller</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #f5f0e8;
+    --panel: #ffffff;
+    --dark: #1a1a2e;
+    --accent: #e8001e;
+    --gold: #d4a000;
+    --text: #1a1a2e;
+    --muted: #6b6b80;
+    --border: #ddd8cc;
+    --green: #00994d;
+    --shadow: rgba(26,26,46,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Oswald', sans-serif;
+    min-height: 100vh;
+    color: var(--text);
+  }
+
+  /* Header */
+  #header {
+    background: var(--dark);
+    color: #f0e8d0;
+    padding: 16px 20px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px var(--shadow);
+  }
+
+  #header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 0.1em;
+    color: #FFD700;
+  }
+
+  #header .subtitle {
+    font-size: 11px;
+    color: #8080a0;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  #send-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(232,0,30,0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+    touch-action: manipulation;
+  }
+
+  #send-btn:active {
+    transform: scale(0.95);
+    box-shadow: 0 1px 4px rgba(232,0,30,0.35);
+  }
+
+  /* Setup panel */
+  #setup-panel {
+    background: var(--dark);
+    color: #f0e8d0;
+    padding: 12px 20px 16px;
+    border-bottom: 3px solid #FFD700;
+  }
+
+  .setup-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .setup-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: #8080a0;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  #scoreboard-url {
+    flex: 1;
+    min-width: 180px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    color: #f0e8d0;
+    padding: 8px 12px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+  }
+
+  #scoreboard-url::placeholder { color: #4a4a60; }
+
+  /* Contestant list */
+  #contestants {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .contestant-row {
+    background: var(--panel);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px 10px 10px;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .contestant-row.top { border-left: 4px solid #FFD700; }
+  .contestant-row.changed { animation: flashGreen 0.5s ease; }
+
+  @keyframes flashGreen {
+    0%, 100% { background: var(--panel); }
+    50% { background: #e8fff3; }
+  }
+
+  .c-rank {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--muted);
+    width: 30px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .top .c-rank { color: var(--gold); }
+
+  .c-photo {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    background: #e0ddd6;
+  }
+
+  .c-photo-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--dark);
+    color: #FFD700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+  }
+
+  .c-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .c-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.02em;
+  }
+
+  .c-score-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--dark);
+    line-height: 1;
+  }
+
+  .c-score-display span {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+  }
+
+  /* Score controls */
+  .score-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .btn-score {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 0.1s, opacity 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .btn-score:active { transform: scale(0.88); }
+
+  .btn-minus {
+    background: #fff0f0;
+    color: var(--accent);
+    border: 1.5px solid #fcc;
+  }
+
+  .btn-plus {
+    background: #f0fff6;
+    color: var(--green);
+    border: 1.5px solid #ade;
+  }
+
+  .score-input {
+    width: 50px;
+    text-align: center;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 4px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--dark);
+    background: var(--bg);
+    -moz-appearance: textfield;
+  }
+
+  .score-input::-webkit-inner-spin-button,
+  .score-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  /* Step size selector */
+  #step-bar {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 10px 14px 4px;
+    overflow-x: auto;
+  }
+
+  #step-bar .label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .step-btn {
+    background: var(--panel);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    touch-action: manipulation;
+  }
+
+  .step-btn.active {
+    background: var(--dark);
+    color: #FFD700;
+    border-color: var(--dark);
+  }
+
+  /* Add contestant */
+  #add-section {
+    padding: 6px 14px 16px;
+  }
+
+  #add-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  #new-name {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px;
+    background: var(--panel);
+  }
+
+  #add-btn {
+    background: var(--dark);
+    color: #FFD700;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  /* URL output */
+  #url-output {
+    margin: 0 14px 14px;
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    word-break: break-all;
+  }
+
+  #url-output .url-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  #url-text {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  #copy-url-btn {
+    margin-top: 8px;
+    background: var(--dark);
+    color: #f0e8d0;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  #copy-url-btn.copied {
+    background: var(--green);
+    color: white;
+  }
+
+  /* Reset scores */
+  #reset-btn {
+    margin: 0 14px 20px;
+    width: calc(100% - 28px);
+    background: transparent;
+    border: 1.5px solid #fcc;
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 10px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .section-title {
+    padding: 4px 14px 6px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div>
+    <h1>⚡ TM CONTROLLER</h1>
+    <div class="subtitle">Taskmaster Score Manager</div>
+  </div>
+  <button id="send-btn" onclick="sendToScoreboard()">SEND TO TV</button>
+</div>
+
+<div id="setup-panel">
+  <div class="setup-label">Scoreboard URL (the TV page)</div>
+  <div class="setup-row">
+    <input id="scoreboard-url" type="url" placeholder="http://192.168.1.X/scoreboard.html" value="">
+  </div>
+</div>
+
+<div id="step-bar">
+  <span class="label">Step:</span>
+  <button class="step-btn active" data-step="1" onclick="setStep(1)">1</button>
+  <button class="step-btn" data-step="2" onclick="setStep(2)">2</button>
+  <button class="step-btn" data-step="3" onclick="setStep(3)">3</button>
+  <button class="step-btn" data-step="5" onclick="setStep(5)">5</button>
+  <button class="step-btn" data-step="10" onclick="setStep(10)">10</button>
+</div>
+
+<div class="section-title">Leaderboard</div>
+<div id="contestants"></div>
+
+<div class="section-title">Add Contestant</div>
+<div id="add-section">
+  <div id="add-row">
+    <input id="new-name" type="text" placeholder="Contestant name...">
+    <button id="add-btn" onclick="addContestant()">ADD</button>
+  </div>
+</div>
+
+<div class="section-title">Generated URL</div>
+<div id="url-output">
+  <div class="url-label">Scoreboard URL with scores</div>
+  <div id="url-text">Press "SEND TO TV" to generate</div>
+  <button id="copy-url-btn" onclick="copyURL()">Copy URL</button>
+</div>
+
+<button id="reset-btn" onclick="resetScores()">Reset All Scores to 0</button>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────
+// Same photo base as scoreboard
+const PHOTO_BASE = 'images/contestants/';
+
+// Pre-configured contestant list — edit this to match your repo
+// Photos should be in images/contestants/<namefilename>.jpg
+// Name is shown as-is; filename is name.toLowerCase().replace(/\s+/g,'_')
+let contestants = [
+  { name: "Amelia", score: 0 },
+  { name: "Blaine", score: 0 },
+  { name: "Charlie", score: 0 },
+  { name: "Dan", score: 0 },
+  { name: "Ed", score: 0 },
+  { name: "Elliott", score: 0 },
+  { name: "Josh D", score: 0 },
+  { name: "Josh T", score: 0 },
+  { name: "Josh W", score: 0 },
+  { name: "Kenz", score: 0 },
+  { name: "Killian", score: 0 },
+  { name: "Kriss", score: 0 },
+  { name: "Lauren", score: 0 },
+  { name: "Liam", score: 0 },
+  { name: "Mick", score: 0 },
+  { name: "Rob", score: 0 },
+  { name: "Sean", score: 0 },
+  { name: "Tom", score: 0 },
+];
+
+let step = 1;
+
+// ─── PERSIST ─────────────────────────────────────────────────────────────
+function save() {
+  try { localStorage.setItem('tm_scores', JSON.stringify(contestants)); } catch(e){}
+}
+
+function load() {
+  try {
+    const d = localStorage.getItem('tm_scores');
+    if (d) {
+      const saved = JSON.parse(d);
+      // Merge saved scores into contestant list (preserving order)
+      saved.forEach(s => {
+        const c = contestants.find(c => c.name === s.name);
+        if (c) c.score = s.score;
+        else contestants.push(s); // new contestant added elsewhere
+      });
+    }
+  } catch(e){}
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────
+function nameToFilename(name) {
+  return name.toLowerCase().replace(/\s+/g, '_');
+}
+
+function sorted() {
+  return [...contestants].sort((a, b) => b.score - a.score);
+}
+
+function setStep(n) {
+  step = n;
+  document.querySelectorAll('.step-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.step) === n);
+  });
+}
+
+function changeScore(name, delta) {
+  const c = contestants.find(c => c.name === name);
+  if (!c) return;
+  c.score = Math.max(0, c.score + delta);
+  save();
+  renderList();
+  updateURL();
+}
+
+function setScore(name, val) {
+  const c = contestants.find(c => c.name === name);
+  if (!c) return;
+  c.score = Math.max(0, parseInt(val) || 0);
+  save();
+  updateURL();
+}
+
+function addContestant() {
+  const input = document.getElementById('new-name');
+  const name = input.value.trim();
+  if (!name || contestants.find(c => c.name.toLowerCase() === name.toLowerCase())) return;
+  contestants.push({ name, score: 0 });
+  input.value = '';
+  save();
+  renderList();
+  updateURL();
+}
+
+function resetScores() {
+  if (!confirm('Reset all scores to 0?')) return;
+  contestants.forEach(c => c.score = 0);
+  save();
+  renderList();
+  updateURL();
+}
+
+// ─── URL GENERATION ───────────────────────────────────────────────────────
+function buildScoreURL(base) {
+  const data = JSON.stringify(sorted());
+  const b64 = btoa(data).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  const sep = base.includes('?') ? '&' : '?';
+  return `${base}${sep}data=${b64}`;
+}
+
+function updateURL() {
+  const base = document.getElementById('scoreboard-url').value || 'scoreboard.html';
+  const url = buildScoreURL(base);
+  document.getElementById('url-text').textContent = url;
+}
+
+function copyURL() {
+  const url = document.getElementById('url-text').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copy-url-btn');
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy URL'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ─── SEND TO TV ───────────────────────────────────────────────────────────
+function sendToScoreboard() {
+  const base = document.getElementById('scoreboard-url').value.trim();
+  if (!base) {
+    alert('Enter the scoreboard URL first (the address of scoreboard.html on your TV/laptop).');
+    return;
+  }
+  const url = buildScoreURL(base);
+  // Open in new tab — on same network the TV browser can be pointed here
+  window.open(url, '_blank');
+  updateURL();
+
+  // Visual feedback
+  const btn = document.getElementById('send-btn');
+  const orig = btn.textContent;
+  btn.textContent = 'SENT ✓';
+  btn.style.background = '#00994d';
+  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1800);
+}
+
+// ─── TIED RANK ────────────────────────────────────────────────────────────
+function competitionRanks(sortedArr) {
+  const ranks = [];
+  let i = 0;
+  while (i < sortedArr.length) {
+    let j = i;
+    while (j < sortedArr.length && sortedArr[j].score === sortedArr[i].score) j++;
+    for (let k = i; k < j; k++) ranks.push(i + 1);
+    i = j;
+  }
+  return ranks;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────
+function renderList() {
+  const ranked = sorted();
+  const ranks  = competitionRanks(ranked);
+  const container = document.getElementById('contestants');
+
+  container.innerHTML = ranked.map((c, i) => {
+    const rank = ranks[i];
+    const isTop = rank <= 5;
+    const fn = nameToFilename(c.name);
+    const photoSrc = `${PHOTO_BASE}${fn}.jpg`;
+
+    return `
+      <div class="contestant-row ${isTop ? 'top' : ''}" id="row-${fn}">
+        <div class="c-rank">${rank}</div>
+        <img class="c-photo" src="${photoSrc}" alt="${c.name}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="c-photo-placeholder" style="display:none">${c.name.charAt(0)}</div>
+        <div class="c-info">
+          <div class="c-name">${c.name}</div>
+          <div class="c-score-display">${c.score} <span>pts</span></div>
+        </div>
+        <div class="score-controls">
+          <button class="btn-score btn-minus" onclick="changeScore('${c.name}', -${step})">−</button>
+          <input class="score-input" type="number" value="${c.score}" min="0"
+            onchange="setScore('${c.name}', this.value); renderList();"
+            onblur="setScore('${c.name}', this.value); renderList();">
+          <button class="btn-score btn-plus"  onclick="changeScore('${c.name}', +${step})">+</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+load();
+renderList();
+updateURL();
+
+// Update URL when scoreboard address changes
+document.getElementById('scoreboard-url').addEventListener('input', updateURL);
+</script>
+</body>
+</html>

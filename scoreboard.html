@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taskmaster Scoreboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;600;700&display=swap');
+
+  :root {
+    --gold: #FFD700;
+    --gold2: #FFC200;
+    --dark: #0a0a0f;
+    --panel: #12121a;
+    --panel2: #1a1a26;
+    --border: #2a2a40;
+    --text: #f0e8d0;
+    --muted: #8080a0;
+    --accent: #e8001e;
+    --green: #00e87a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Oswald', sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(232,0,30,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 20% 80%, rgba(255,215,0,0.04) 0%, transparent 50%),
+      repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.01) 40px, rgba(255,255,255,0.01) 41px),
+      repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,0.01) 40px, rgba(255,255,255,0.01) 41px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; padding: 16px 20px 12px; gap: 10px; }
+
+  /* Header */
+  #header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0 4px;
+    gap: 20px;
+  }
+
+  .header-line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  #header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8vw;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(255,215,0,0.5), 0 2px 4px rgba(0,0,0,0.8);
+    white-space: nowrap;
+  }
+
+  /* Top 5 section */
+  #top5 {
+    display: flex;
+    gap: 12px;
+    flex: 0 0 auto;
+  }
+
+  .contestant-card {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.6s ease;
+  }
+
+  .contestant-card.rank-1 {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(255,215,0,0.2), 0 0 60px rgba(255,215,0,0.05);
+  }
+
+  .contestant-card.rank-2 { border-color: #C0C0C0; }
+  .contestant-card.rank-3 { border-color: #CD7F32; }
+
+  .card-photo {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    background: var(--panel2);
+  }
+
+  .card-photo-placeholder {
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--panel2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3vw;
+    color: var(--muted);
+    font-family: 'Bebas Neue', sans-serif;
+  }
+
+  .card-body {
+    padding: 8px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .card-rank {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1vw;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .rank-1 .card-rank { color: var(--gold); }
+  .rank-2 .card-rank { color: #C0C0C0; }
+  .rank-3 .card-rank { color: #CD7F32; }
+
+  .card-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5vw;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.2vw;
+    line-height: 1;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(255,215,0,0.4);
+  }
+
+  .rank-1 .card-score { font-size: 4vw; }
+
+  .card-pts {
+    font-size: 0.8vw;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* Score bar */
+  .score-bar-wrap {
+    margin-top: 4px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .score-bar {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--gold2), var(--gold));
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Rest section */
+  #rest {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  #rest-header {
+    padding: 6px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1vw;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+  }
+
+  #rest-list {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex: 1;
+    scroll-behavior: auto;
+    /* hide scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  #rest-list::-webkit-scrollbar { display: none; }
+
+  .rest-row {
+    display: grid;
+    grid-template-columns: 2.5vw 3.5vw 1fr 8vw 12vw;
+    align-items: center;
+    padding: 5px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    gap: 8px;
+    transition: background 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .rest-row:hover { background: rgba(255,255,255,0.02); }
+  .rest-row:last-child { border-bottom: none; }
+
+  .rest-rank {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1vw;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .rest-photo {
+    width: 3vw;
+    height: 3vw;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    border: 1px solid var(--border);
+    background: var(--panel2);
+  }
+
+  .rest-photo-placeholder {
+    width: 3vw;
+    height: 3vw;
+    border-radius: 50%;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9vw;
+    color: var(--muted);
+    font-family: 'Bebas Neue', sans-serif;
+  }
+
+  .rest-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.2vw;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .rest-bar-wrap {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .rest-bar {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #6060a0, #8080c0);
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .rest-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8vw;
+    color: var(--text);
+    text-align: right;
+  }
+
+  /* Animations */
+  @keyframes slideInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scoreUp {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.15); color: var(--green); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes rankChange {
+    0%   { background: transparent; }
+    30%  { background: rgba(255,215,0,0.08); }
+    100% { background: transparent; }
+  }
+
+  .score-bump { animation: scoreUp 0.7s ease forwards; }
+  .rank-bump  { animation: rankChange 1s ease forwards; }
+
+  .contestant-card { animation: slideInDown 0.5s ease both; }
+  .contestant-card:nth-child(1) { animation-delay: 0.05s; }
+  .contestant-card:nth-child(2) { animation-delay: 0.10s; }
+  .contestant-card:nth-child(3) { animation-delay: 0.15s; }
+  .contestant-card:nth-child(4) { animation-delay: 0.20s; }
+  .contestant-card:nth-child(5) { animation-delay: 0.25s; }
+
+  /* Status bar */
+  #statusbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 0.75vw;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  #live-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 6px;
+    animation: pulse 2s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* Trophy icons for top 3 */
+  .medal {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 1.2vw;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8));
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div class="header-line"></div>
+    <h1>⚡ TASKMASTER SCOREBOARD ⚡</h1>
+    <div class="header-line"></div>
+  </div>
+
+  <div id="top5"></div>
+
+  <div id="rest">
+    <div id="rest-header">ALL CONTESTANTS</div>
+    <div id="rest-list"></div>
+  </div>
+
+  <div id="statusbar">
+    <span><span id="live-dot"></span>LIVE</span>
+    <span id="last-update">Waiting for scores...</span>
+    <span id="contestant-count"></span>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────
+// Place contestant photos in an `images/contestants/` folder.
+// File names should match contestant names (case-insensitive, spaces → underscores or hyphens).
+// e.g. images/contestants/alice_johnson.jpg
+// The name displayed is derived from the filename: "alice_johnson" → "Alice Johnson"
+
+// Fallback contestant list — used if no URL param is present (useful for testing)
+const FALLBACK_CONTESTANTS = [
+  { name: "Amelia", score: 0 },
+  { name: "Blaine", score: 0 },
+  { name: "Charlie", score: 0 },
+  { name: "Dan", score: 0 },
+  { name: "Ed", score: 0 },
+  { name: "Elliott", score: 0 },
+  { name: "Josh D", score: 0 },
+  { name: "Josh T", score: 0 },
+  { name: "Josh W", score: 0 },
+  { name: "Kenz", score: 0 },
+  { name: "Killian", score: 0 },
+  { name: "Kriss", score: 0 },
+  { name: "Lauren", score: 0 },
+  { name: "Liam", score: 0 },
+  { name: "Mick", score: 0 },
+  { name: "Rob", score: 0 },
+  { name: "Sean", score: 0 },
+  { name: "Tom", score: 0 },
+];
+
+// Photo folder path (relative to scoreboard.html)
+const PHOTO_BASE = 'images/contestants/';
+
+// ─── STATE ───────────────────────────────────────────────────────────────
+let currentScores = {};   // name → score
+let prevRanks     = {};   // name → rank (for detecting changes)
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────
+function nameToFilename(name) {
+  return name.toLowerCase().replace(/\s+/g, '_');
+}
+
+function photoSrc(name) {
+  const base = nameToFilename(name);
+  // Try common extensions — browser will try .jpg first; fallback handled in onerror
+  return `${PHOTO_BASE}${base}.jpg`;
+}
+
+function imgTag(name, cls, alt) {
+  return `<img 
+    class="${cls}" 
+    src="${photoSrc(name)}" 
+    alt="${name}" 
+    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+  <div class="${cls}-placeholder" style="display:none">${name.charAt(0).toUpperCase()}</div>`;
+}
+
+function sorted(contestants) {
+  return [...contestants].sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+}
+
+function getOrdinal(n) {
+  const s = ['th','st','nd','rd'], v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+// ─── PARSE URL ────────────────────────────────────────────────────────────
+// Scores are passed as: ?scores=Alice:42,Bob:38,Carol:35,...
+// Or full JSON: ?data=<base64url encoded JSON>
+function parseURLScores() {
+  const params = new URLSearchParams(window.location.search);
+
+  // JSON mode (base64url)
+  if (params.has('data')) {
+    try {
+      const json = atob(params.get('data').replace(/-/g,'+').replace(/_/g,'/'));
+      const arr = JSON.parse(json);
+      return arr; // [{name, score}, ...]
+    } catch(e) { console.warn('Bad data param', e); }
+  }
+
+  // Simple mode: ?scores=Name:score,Name2:score2
+  if (params.has('scores')) {
+    return params.get('scores').split(',').map(entry => {
+      const [name, score] = entry.split(':');
+      return { name: decodeURIComponent(name.trim()), score: parseInt(score) || 0 };
+    });
+  }
+
+  return null;
+}
+
+// ─── TIED RANK ────────────────────────────────────────────────────────────
+// Returns an array of competition ranks (1,1,3,4,4,6,...) matching the sorted order
+function competitionRanks(sortedContestants) {
+  const ranks = [];
+  let i = 0;
+  while (i < sortedContestants.length) {
+    // Find how many share this score
+    let j = i;
+    while (j < sortedContestants.length && sortedContestants[j].score === sortedContestants[i].score) j++;
+    // All from i to j-1 share rank (i+1)
+    for (let k = i; k < j; k++) ranks.push(i + 1);
+    i = j;
+  }
+  return ranks;
+}
+
+// ─── AUTOSCROLL ───────────────────────────────────────────────────────────
+let scrollTimer = null;
+let scrollRAF   = null;
+
+function startAutoscroll() {
+  stopAutoscroll();
+  const el = document.getElementById('rest-list');
+  if (!el) return;
+
+  // Only scroll if content overflows
+  if (el.scrollHeight <= el.clientHeight + 2) return;
+
+  const SCROLL_SPEED = 30;   // px per second
+  const PAUSE_TOP    = 2000; // ms pause at top before scrolling
+  const PAUSE_BOTTOM = 1500; // ms pause at bottom before jumping back
+
+  let lastTime = null;
+  let phase = 'pause-top';  // 'pause-top' | 'scrolling' | 'pause-bottom'
+  let pauseStart = performance.now();
+
+  function tick(now) {
+    if (!lastTime) lastTime = now;
+    const dt = now - lastTime;
+    lastTime = now;
+
+    if (phase === 'pause-top') {
+      if (now - pauseStart >= PAUSE_TOP) {
+        phase = 'scrolling';
+      }
+    } else if (phase === 'scrolling') {
+      el.scrollTop += SCROLL_SPEED * (dt / 1000);
+      // Reached bottom?
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 2) {
+        el.scrollTop = el.scrollHeight; // snap to true bottom
+        phase = 'pause-bottom';
+        pauseStart = now;
+      }
+    } else if (phase === 'pause-bottom') {
+      if (now - pauseStart >= PAUSE_BOTTOM) {
+        el.scrollTop = 0;
+        phase = 'pause-top';
+        pauseStart = now;
+      }
+    }
+
+    scrollRAF = requestAnimationFrame(tick);
+  }
+
+  scrollRAF = requestAnimationFrame(tick);
+}
+
+function stopAutoscroll() {
+  if (scrollRAF) { cancelAnimationFrame(scrollRAF); scrollRAF = null; }
+  if (scrollTimer) { clearTimeout(scrollTimer); scrollTimer = null; }
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────
+function render(contestants) {
+  const rankedAll = sorted(contestants);
+  const maxScore  = rankedAll[0]?.score || 1;
+  const allRanks  = competitionRanks(rankedAll);
+
+  // Determine top-section cutoff: first 5 positions by competition rank
+  // (if position 5 is tied, those tied people all go in top section)
+  let topCutoff = 0;
+  for (let i = 0; i < rankedAll.length; i++) {
+    if (allRanks[i] <= 5) topCutoff = i + 1;
+    else break;
+  }
+  // Cap top section at 5 cards maximum to avoid layout explosion on big ties
+  topCutoff = Math.min(topCutoff, 5);
+
+  const top5 = rankedAll.slice(0, topCutoff);
+  const rest = rankedAll.slice(topCutoff);
+
+  // Track rank changes
+  const newRanks = {};
+  rankedAll.forEach((c, i) => { newRanks[c.name] = allRanks[i]; });
+
+  // ── Top 5 ──
+  const top5El = document.getElementById('top5');
+  const cards = [];
+
+  top5.forEach((c, i) => {
+    const rank = allRanks[i];
+    const rankClass = rank <= 3 ? `rank-${rank}` : '';
+    const medals = ['🥇','🥈','🥉'];
+    const pct = maxScore ? Math.round((c.score / maxScore) * 100) : 0;
+    const changed = prevRanks[c.name] !== undefined && prevRanks[c.name] !== rank;
+    const scoreChanged = currentScores[c.name] !== undefined && currentScores[c.name] !== c.score;
+
+    cards.push(`
+      <div class="contestant-card ${rankClass} ${changed ? 'rank-bump' : ''}" data-name="${c.name}">
+        ${rank <= 3 ? `<div class="medal">${medals[rank-1]}</div>` : ''}
+        <img class="card-photo" src="${photoSrc(c.name)}" alt="${c.name}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="card-photo-placeholder" style="display:none">${c.name.charAt(0)}</div>
+        <div class="card-body">
+          <div class="card-rank">${getOrdinal(rank)} place</div>
+          <div class="card-name">${c.name}</div>
+          <div class="card-score ${scoreChanged ? 'score-bump' : ''}">${c.score}</div>
+          <div class="card-pts">points</div>
+          <div class="score-bar-wrap">
+            <div class="score-bar" style="width:${pct}%"></div>
+          </div>
+        </div>
+      </div>
+    `);
+  });
+
+  top5El.innerHTML = cards.join('');
+
+  // ── Rest ──
+  const restList = document.getElementById('rest-list');
+  stopAutoscroll();
+  restList.scrollTop = 0;
+
+  if (rest.length === 0) {
+    restList.innerHTML = '<div style="padding:12px 16px;color:var(--muted);font-size:1vw;">Only top contestants — all shown above.</div>';
+  } else {
+    const rows = rest.map((c, i) => {
+      const rank = allRanks[topCutoff + i];
+      const pct  = maxScore ? Math.round((c.score / maxScore) * 100) : 0;
+      const scoreChanged = currentScores[c.name] !== undefined && currentScores[c.name] !== c.score;
+      return `
+        <div class="rest-row" data-name="${c.name}">
+          <div class="rest-rank">${rank}</div>
+          <img class="rest-photo" src="${photoSrc(c.name)}" alt="${c.name}"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="rest-photo-placeholder" style="display:none">${c.name.charAt(0)}</div>
+          <div class="rest-name">${c.name}</div>
+          <div class="rest-bar-wrap"><div class="rest-bar" style="width:${pct}%"></div></div>
+          <div class="rest-score ${scoreChanged ? 'score-bump' : ''}">${c.score}</div>
+        </div>
+      `;
+    });
+    restList.innerHTML = rows.join('');
+
+    // Start autoscroll after a short delay (let layout settle)
+    setTimeout(startAutoscroll, 800);
+  }
+
+  // ── Status bar ──
+  document.getElementById('last-update').textContent =
+    'Updated: ' + new Date().toLocaleTimeString();
+  document.getElementById('contestant-count').textContent =
+    `${contestants.length} CONTESTANTS`;
+
+  // Save state
+  prevRanks = newRanks;
+  contestants.forEach(c => { currentScores[c.name] = c.score; });
+}
+
+// ─── POLLING ──────────────────────────────────────────────────────────────
+// Poll the URL hash for score updates (controller updates window.location.hash on same device,
+// or the TV page can be reloaded by the controller via ?scores= param)
+let lastHash = '';
+function checkForUpdates() {
+  const hash = window.location.hash;
+  if (hash && hash !== lastHash) {
+    lastHash = hash;
+    try {
+      const json = atob(hash.slice(1).replace(/-/g,'+').replace(/_/g,'/'));
+      const arr = JSON.parse(json);
+      render(arr);
+    } catch(e) {}
+  }
+
+  // Also check URL search param changes (for when page is reloaded by controller)
+  const fromURL = parseURLScores();
+  if (fromURL) render(fromURL);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+function init() {
+  const fromURL = parseURLScores();
+  render(fromURL || FALLBACK_CONTESTANTS);
+
+  // Poll every 2 seconds for hash-based live updates
+  // (The controller can update the hash without reloading the page on the same network)
+  setInterval(() => {
+    // Re-read the search param in case someone navigated
+    // Main update path is reload via controller
+  }, 2000);
+
+  // Also listen for hash changes
+  window.addEventListener('hashchange', checkForUpdates);
+}
+
+init();
+</script>
+</body>
+</html>
